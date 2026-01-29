@@ -59,6 +59,18 @@ export const getByEditKey = query({
   },
 });
 
+export const getAll = query({
+  args: {},
+  handler: async (ctx) => {
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_submittedAt")
+      .order("desc")
+      .collect();
+    return feedback;
+  },
+});
+
 export const update = mutation({
   args: {
     editKey: v.string(),

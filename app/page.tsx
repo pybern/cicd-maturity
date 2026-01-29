@@ -472,14 +472,32 @@ export default function Home() {
           {editKey && (
             <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800">
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Your edit key (save this to update your responses later)
+                Your edit key (click to copy)
               </p>
-              <p className="mt-1 font-mono text-lg font-semibold tracking-wider text-zinc-900 dark:text-zinc-100">
-                {editKey}
-              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(editKey);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    const input = document.createElement("input");
+                    input.value = editKey;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(input);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }}
+                className="mt-1 font-mono text-lg font-semibold tracking-wider text-zinc-900 hover:text-zinc-600 dark:text-zinc-100 dark:hover:text-zinc-300"
+              >
+                {copied ? "Copied!" : editKey}
+              </button>
               <a
                 href={`/edit/${editKey}`}
-                className="mt-2 inline-block text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="mt-2 block text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 Edit your responses
               </a>
