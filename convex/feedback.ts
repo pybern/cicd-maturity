@@ -32,8 +32,30 @@ export const submit = mutation({
     maturityLevel: v.string(),
   },
   handler: async (ctx, args) => {
-    const editKey = generateEditKey();
-    
+    // Generate unique editKey with collision check
+    let editKey = generateEditKey();
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      const existing = await ctx.db
+        .query("feedback")
+        .withIndex("by_editKey", (q) => q.eq("editKey", editKey))
+        .first();
+
+      if (!existing) {
+        break; // Key is unique
+      }
+
+      // Collision detected, generate new key
+      editKey = generateEditKey();
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      throw new Error("Failed to generate unique edit key. Please try again.");
+    }
+
     await ctx.db.insert("feedback", {
       editKey,
       nickname: args.nickname,
@@ -43,7 +65,7 @@ export const submit = mutation({
       maturityLevel: args.maturityLevel,
       submittedAt: Date.now(),
     });
-    
+
     return { editKey };
   },
 });
