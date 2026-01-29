@@ -360,7 +360,7 @@ export default function Home() {
                 Evaluate your team&apos;s CI/CD maturity across 8 key areas: build & integration, test automation, deployment, release frequency, infrastructure, observability, security, and culture.
               </p>
               <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
-                Takes about 2 minutes to complete
+                Takes about 5 minutes to complete
               </p>
               <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
                 Responses are anonymous. Please reflect as accurately as possible.
@@ -743,7 +743,7 @@ export default function Home() {
                 {currentStep + 1} / {questions.length}
               </span>
               <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                est. 2 minutes
+                est. 5 minutes
               </span>
             </div>
           </div>
