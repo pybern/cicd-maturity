@@ -343,7 +343,7 @@ export default function Home() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="mb-6 text-center">
               <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-                CI/CD Maturity Assessment
+                CI/CD Assessment
               </h1>
               <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                 Help us understand your team&apos;s delivery practices
@@ -551,7 +551,7 @@ export default function Home() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="mb-8 text-center">
               <h1 className="mb-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-                Your CI/CD Maturity Assessment
+                Your CI/CD Assessment
               </h1>
               <p className="text-zinc-500 dark:text-zinc-400">
                 Based on your responses across 8 dimensions

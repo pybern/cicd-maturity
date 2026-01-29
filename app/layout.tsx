@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CI/CD Maturity Assessment",
+  title: "CI/CD Assessment",
   description: "Evaluate your team's CI/CD practices and get personalized recommendations for improvement.",
 };
 
