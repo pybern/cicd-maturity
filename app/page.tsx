@@ -290,6 +290,7 @@ export default function Home() {
           selectedLabel: option?.label || "",
           selectedText: option?.text || "",
           experience: answer?.experience || "",
+          score: parseInt(answer?.value || "0", 10),
         };
       });
 
@@ -345,8 +346,14 @@ export default function Home() {
               <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
                 CI/CD Assessment
               </h1>
-              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                Help us understand your team&apos;s delivery practices
+              <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                Evaluate your team&apos;s CI/CD maturity across 8 key areas: build & integration, test automation, deployment, release frequency, infrastructure, observability, security, and culture.
+              </p>
+              <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+                Takes about 2 minutes to complete
+              </p>
+              <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                Responses are anonymous. Please reflect as accurately as possible.
               </p>
             </div>
 

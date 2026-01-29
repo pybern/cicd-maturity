@@ -13,10 +13,11 @@ export default defineSchema({
         selectedLabel: v.string(),
         selectedText: v.string(),
         experience: v.string(),
+        score: v.number(),
       })
     ),
     totalScore: v.number(),
     maturityLevel: v.string(),
     submittedAt: v.number(),
-  }),
+  }).index("by_submittedAt", ["submittedAt"]),
 });

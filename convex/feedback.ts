@@ -13,6 +13,7 @@ export const submit = mutation({
         selectedLabel: v.string(),
         selectedText: v.string(),
         experience: v.string(),
+        score: v.number(),
       })
     ),
     totalScore: v.number(),
