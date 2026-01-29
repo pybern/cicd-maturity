@@ -282,6 +282,13 @@ export default function Home() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Tom Bombadil passes through without leaving a trace
+      if (nickname.toLowerCase() === "tombombadil") {
+        setShowReview(false);
+        setShowThankYou(true);
+        return;
+      }
+
       const formattedAnswers = questions.map((q) => {
         const answer = answers[q.id];
         const option = q.options.find((o) => o.value === answer?.value);
@@ -783,7 +790,7 @@ export default function Home() {
                     <div className="overflow-hidden">
                       <div className="mb-1.5 flex items-center justify-between">
                         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          Describe your experience <span className="text-red-500">*</span>
+                          Describe your experience {nickname.toLowerCase() !== "tombombadil" && <span className="text-red-500">*</span>}
                         </label>
                         {currentAnswer?.experience?.trim() && !enhancedSuggestion && (
                           <button
@@ -861,7 +868,7 @@ export default function Home() {
             </button>
             <button
               onClick={handleNext}
-              disabled={!currentAnswer?.value || !currentAnswer?.experience?.trim()}
+              disabled={!currentAnswer?.value || (!currentAnswer?.experience?.trim() && nickname.toLowerCase() !== "tombombadil")}
               className="flex-1 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               {currentStep === questions.length - 1 ? "Review" : "Continue"}
