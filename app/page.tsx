@@ -314,6 +314,9 @@ export default function Home() {
       setEditKey(result.editKey);
       setShowReview(false);
       setShowThankYou(true);
+
+      // Trigger analysis regeneration in background
+      fetch("/api/analyze", { method: "POST" }).catch(console.error);
     } catch (error) {
       console.error("Failed to submit feedback:", error);
       alert("Failed to submit feedback. Please try again.");

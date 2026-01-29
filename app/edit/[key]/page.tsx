@@ -240,6 +240,9 @@ export default function EditPage() {
       });
 
       setShowThankYou(true);
+
+      // Trigger analysis regeneration in background
+      fetch("/api/analyze", { method: "POST" }).catch(console.error);
     } catch (error) {
       console.error("Failed to update:", error);
       alert("Failed to update. Please try again.");

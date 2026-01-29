@@ -24,4 +24,21 @@ export default defineSchema({
   })
     .index("by_submittedAt", ["submittedAt"])
     .index("by_editKey", ["editKey"]),
+
+  analysis: defineTable({
+    totalResponses: v.number(),
+    avgScore: v.number(),
+    dominantMaturityLevel: v.string(),
+    summary: v.string(),
+    actionItems: v.array(v.string()),
+    areaSummaries: v.array(
+      v.object({
+        questionId: v.string(),
+        title: v.string(),
+        avgScore: v.number(),
+        summary: v.string(),
+      })
+    ),
+    generatedAt: v.number(),
+  }),
 });
