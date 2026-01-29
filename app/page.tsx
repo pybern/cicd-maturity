@@ -161,6 +161,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancedSuggestion, setEnhancedSuggestion] = useState<string | null>(null);
+  const [editKey, setEditKey] = useState<string | null>(null);
 
   const submitFeedback = useMutation(api.feedback.submit);
 
@@ -228,6 +229,7 @@ export default function Home() {
     setShowResults(false);
     setShowThankYou(false);
     setExpandedReview(null);
+    setEditKey(null);
   };
 
   const handleStart = () => {
@@ -294,7 +296,7 @@ export default function Home() {
         };
       });
 
-      await submitFeedback({
+      const result = await submitFeedback({
         nickname: nickname.trim(),
         role,
         answers: formattedAnswers,
@@ -302,6 +304,7 @@ export default function Home() {
         maturityLevel: interpretation?.level || "",
       });
 
+      setEditKey(result.editKey);
       setShowReview(false);
       setShowThankYou(true);
     } catch (error) {
@@ -394,6 +397,47 @@ export default function Home() {
             >
               Start Assessment
             </button>
+
+            <div className="relative my-6 flex items-center">
+              <div className="flex-grow border-t border-zinc-200 dark:border-zinc-700"></div>
+              <span className="mx-3 text-xs text-zinc-400 dark:text-zinc-500">or</span>
+              <div className="flex-grow border-t border-zinc-200 dark:border-zinc-700"></div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Have an edit key?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter your key"
+                  maxLength={6}
+                  className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm uppercase tracking-wider text-zinc-900 placeholder:text-zinc-400 placeholder:normal-case focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const input = e.target as HTMLInputElement;
+                      if (input.value.trim()) {
+                        window.location.href = `/edit/${input.value.trim().toUpperCase()}`;
+                      }
+                    }
+                  }}
+                  id="editKeyInput"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.getElementById("editKeyInput") as HTMLInputElement;
+                    if (input?.value.trim()) {
+                      window.location.href = `/edit/${input.value.trim().toUpperCase()}`;
+                    }
+                  }}
+                  className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -424,6 +468,24 @@ export default function Home() {
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
             Thank you for your feedback!
           </h1>
+          
+          {editKey && (
+            <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Your edit key (save this to update your responses later)
+              </p>
+              <p className="mt-1 font-mono text-lg font-semibold tracking-wider text-zinc-900 dark:text-zinc-100">
+                {editKey}
+              </p>
+              <a
+                href={`/edit/${editKey}`}
+                className="mt-2 inline-block text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                Edit your responses
+              </a>
+            </div>
+          )}
+
           <button
             onClick={handleCopyLink}
             className="mt-6 inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -444,6 +506,18 @@ export default function Home() {
               </>
             )}
           </button>
+
+          <div className="mt-8">
+            <a
+              href="/"
+              className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to home
+            </a>
+          </div>
         </div>
       </div>
     );

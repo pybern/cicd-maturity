@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 export default defineSchema({
   feedback: defineTable({
+    editKey: v.string(),
     nickname: v.string(),
     role: v.string(),
     answers: v.array(
@@ -19,5 +20,8 @@ export default defineSchema({
     totalScore: v.number(),
     maturityLevel: v.string(),
     submittedAt: v.number(),
-  }).index("by_submittedAt", ["submittedAt"]),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_submittedAt", ["submittedAt"])
+    .index("by_editKey", ["editKey"]),
 });
