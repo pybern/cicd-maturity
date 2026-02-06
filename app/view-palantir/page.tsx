@@ -397,7 +397,8 @@ export default function ViewPalantirPage() {
                 }`}
               >
                 Responses
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </div>
