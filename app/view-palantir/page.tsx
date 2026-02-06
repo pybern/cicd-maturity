@@ -29,8 +29,16 @@ const scoreColors: Record<number, string> = {
   4: "bg-green-500",
 };
 
+type ExportOptions = {
+  allResponses: boolean;
+  filteredResponses: boolean;
+  insights: boolean;
+  aiAnalysis: boolean;
+};
+
 export default function ViewPalantirPage() {
   const feedback = useQuery(api.feedback.getAll);
+  const analysis = useQuery(api.analysis.get);
   const [view, setView] = useState<"responses" | "charts">("charts");
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -38,6 +46,13 @@ export default function ViewPalantirPage() {
   const [sortBy, setSortBy] = useState<"date" | "score">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportOptions, setExportOptions] = useState<ExportOptions>({
+    allResponses: true,
+    filteredResponses: false,
+    insights: true,
+    aiAnalysis: true,
+  });
 
   const filteredFeedback = useMemo(() => {
     if (!feedback) return [];
@@ -116,6 +131,116 @@ export default function ViewPalantirPage() {
 
   const levels = ["Initial", "Emerging", "Established", "Optimizing"];
 
+  const handleExport = () => {
+    if (!feedback) return;
+
+    const exportData: Record<string, unknown> = {
+      exportedAt: new Date().toISOString(),
+      exportOptions,
+    };
+
+    if (exportOptions.allResponses) {
+      exportData.allResponses = feedback.map((f) => ({
+        nickname: f.nickname,
+        role: f.role,
+        totalScore: f.totalScore,
+        maturityLevel: f.maturityLevel,
+        submittedAt: new Date(f.submittedAt).toISOString(),
+        updatedAt: f.updatedAt ? new Date(f.updatedAt).toISOString() : null,
+        answers: f.answers.map((a) => ({
+          questionId: a.questionId,
+          questionTitle: a.questionTitle,
+          selectedLabel: a.selectedLabel,
+          selectedText: a.selectedText,
+          score: a.score,
+          experience: a.experience,
+        })),
+      }));
+    }
+
+    if (exportOptions.filteredResponses && filteredFeedback.length !== feedback.length) {
+      exportData.filteredResponses = {
+        filters: {
+          searchTerm: searchTerm || null,
+          roleFilter: roleFilter !== "all" ? roleFilter : null,
+          levelFilter: levelFilter !== "all" ? levelFilter : null,
+        },
+        count: filteredFeedback.length,
+        responses: filteredFeedback.map((f) => ({
+          nickname: f.nickname,
+          role: f.role,
+          totalScore: f.totalScore,
+          maturityLevel: f.maturityLevel,
+          submittedAt: new Date(f.submittedAt).toISOString(),
+          answers: f.answers.map((a) => ({
+            questionId: a.questionId,
+            questionTitle: a.questionTitle,
+            selectedLabel: a.selectedLabel,
+            score: a.score,
+            experience: a.experience,
+          })),
+        })),
+      };
+    }
+
+    if (exportOptions.insights && chartData) {
+      exportData.insights = {
+        totalResponses: chartData.totalResponses,
+        questionStats: Object.entries(chartData.questionStats).map(([qId, stats]) => ({
+          questionId: qId,
+          title: stats.title,
+          avgScore: Number(stats.avgScore.toFixed(2)),
+          distribution: {
+            "A (1)": stats.distribution[1] || 0,
+            "B (2)": stats.distribution[2] || 0,
+            "C (3)": stats.distribution[3] || 0,
+            "D (4)": stats.distribution[4] || 0,
+          },
+          distributionPercentages: {
+            "A (1)": Number(((stats.distribution[1] || 0) / chartData.totalResponses * 100).toFixed(1)),
+            "B (2)": Number(((stats.distribution[2] || 0) / chartData.totalResponses * 100).toFixed(1)),
+            "C (3)": Number(((stats.distribution[3] || 0) / chartData.totalResponses * 100).toFixed(1)),
+            "D (4)": Number(((stats.distribution[4] || 0) / chartData.totalResponses * 100).toFixed(1)),
+          },
+        })),
+        rankings: {
+          lowestScoring: Object.entries(chartData.questionStats)
+            .sort((a, b) => a[1].avgScore - b[1].avgScore)
+            .slice(0, 3)
+            .map(([, stats]) => ({ title: stats.title, avgScore: Number(stats.avgScore.toFixed(2)) })),
+          highestScoring: Object.entries(chartData.questionStats)
+            .sort((a, b) => b[1].avgScore - a[1].avgScore)
+            .slice(0, 3)
+            .map(([, stats]) => ({ title: stats.title, avgScore: Number(stats.avgScore.toFixed(2)) })),
+        },
+      };
+    }
+
+    if (exportOptions.aiAnalysis && analysis) {
+      exportData.aiAnalysis = {
+        summary: analysis.summary,
+        actionItems: analysis.actionItems,
+        dominantMaturityLevel: analysis.dominantMaturityLevel,
+        avgScore: analysis.avgScore,
+        totalResponses: analysis.totalResponses,
+        areaSummaries: analysis.areaSummaries,
+        generatedAt: new Date(analysis.generatedAt).toISOString(),
+      };
+    }
+
+    // Download JSON
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cicd-assessment-export-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportModal(false);
+  };
+
   if (feedback === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
@@ -136,6 +261,102 @@ export default function ViewPalantirPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              Export to JSON
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Select what to include in the export
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.allResponses}
+                  onChange={(e) => setExportOptions({ ...exportOptions, allResponses: e.target.checked })}
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600"
+                />
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">All Responses</p>
+                  <p className="text-xs text-zinc-500">{feedback.length} responses with full details</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.filteredResponses}
+                  onChange={(e) => setExportOptions({ ...exportOptions, filteredResponses: e.target.checked })}
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600"
+                  disabled={filteredFeedback.length === feedback.length}
+                />
+                <div>
+                  <p className={`text-sm font-medium ${filteredFeedback.length === feedback.length ? "text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>
+                    Filtered Responses
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {filteredFeedback.length === feedback.length
+                      ? "No filters applied"
+                      : `${filteredFeedback.length} responses matching current filters`}
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.insights}
+                  onChange={(e) => setExportOptions({ ...exportOptions, insights: e.target.checked })}
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600"
+                />
+                <div>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Insights & Analytics</p>
+                  <p className="text-xs text-zinc-500">Question stats, distributions, and rankings</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={exportOptions.aiAnalysis}
+                  onChange={(e) => setExportOptions({ ...exportOptions, aiAnalysis: e.target.checked })}
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600"
+                  disabled={!analysis}
+                />
+                <div>
+                  <p className={`text-sm font-medium ${!analysis ? "text-zinc-400" : "text-zinc-900 dark:text-zinc-100"}`}>
+                    AI Analysis
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {analysis ? "Summary, action items, and area insights" : "No AI analysis available"}
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="flex-1 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={!exportOptions.allResponses && !exportOptions.filteredResponses && !exportOptions.insights && !exportOptions.aiAnalysis}
+                className="flex-1 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                Export JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="border-b border-zinc-200 dark:border-zinc-800">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
@@ -146,26 +367,36 @@ export default function ViewPalantirPage() {
               {feedback.length} total responses
             </p>
           </div>
-          <div className="flex rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setView("charts")}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                view === "charts"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              }`}
+              onClick={() => setShowExportModal(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
-              Charts
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export
             </button>
-            <button
-              onClick={() => setView("responses")}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                view === "responses"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              }`}
-            >
-              Responses
+            <div className="flex rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+              <button
+                onClick={() => setView("charts")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  view === "charts"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                }`}
+              >
+                Charts
+              </button>
+              <button
+                onClick={() => setView("responses")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  view === "responses"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                }`}
+              >
+                Responses
             </button>
           </div>
         </div>
